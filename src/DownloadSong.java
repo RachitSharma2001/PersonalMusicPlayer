@@ -3,11 +3,11 @@ import java.net.*;
 
 public class DownloadSong {
 
-	static String url= "https://www.youtube.com/watch?v=nlBm9M45FAs";
+	static String url= "https://www.youtube.com/watch?v=nWCPhAVMh6g";
 	public static void main(String[] args){
 		String command = "cd /Users/RichSharma/Desktop/PersonalSongs ; youtube-dl -x --audio-format mp3 " + url;
 		final String[] wrappedCommand = new String[]{"osascript",
-	                "-e", "tell application \"Terminal\" to do script \"" + command + ";"};
+	                "-e", "tell application \"Terminal\" to do script \"" + command + ";exit\""};
 	    try {
 			Process process = new ProcessBuilder(wrappedCommand)
 			        .redirectErrorStream(true)
