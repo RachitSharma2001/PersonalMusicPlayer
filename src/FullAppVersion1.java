@@ -6,26 +6,29 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 import javafx.application.Application;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class FullAppVersion1 extends Application {
 	static Scene menu, songList, addSongs, playSongs;
@@ -33,7 +36,6 @@ public class FullAppVersion1 extends Application {
 	static File playlist = new File("/Users/RichSharma/Desktop/PersonalSongs/playlist.txt");
 	
 	public static void makeMenu(Stage window){
-		
 		HBox hbox = new HBox();
 		hbox.setPadding(new Insets(15, 12, 15, 12));
 	    hbox.setSpacing(10);
@@ -41,6 +43,7 @@ public class FullAppVersion1 extends Application {
 
 	    Button playS = new Button("Play Songs");
 	    playS.setPrefSize(100, 20);
+	    playS.setOnAction(e -> window.setScene(playSongs));
 
 	    Button addS = new Button("Add Songs");
 	    addS.setPrefSize(100, 20);
@@ -81,7 +84,103 @@ public class FullAppVersion1 extends Application {
 	    addSongs = new Scene(background, 200, 200);
 	}
 	
-	public static ArrayList<String> returnCurrentFiles(){
+	public static void makePlaySongs(Stage window){
+		VBox vbox = new VBox();
+		vbox.setPadding(new Insets(15, 12, 15, 12));
+	    vbox.setSpacing(10);
+	    
+		Button backToMenu = new Button("Back to Menu");
+		backToMenu.setPrefSize(150, 30);
+		backToMenu.setOnAction(e->window.setScene(menu));
+		
+		Label songName = new Label("Song Name Artist Name");
+		HBox names = new HBox();
+		names.setPadding(new Insets(15, 12, 15, 12));
+	    names.setSpacing(50);
+		names.getChildren().addAll(songName);
+		
+		ProgressBar songProgress = new ProgressBar();
+		songProgress.setScaleX(1.3);
+		songProgress.setProgress(0.0);
+		
+		Button skip = new Button("Skip");
+		Button pause = new Button("Pause");
+		Button resume = new Button("Resume");
+		HBox buttons = new HBox();
+		buttons.setPadding(new Insets(15, 12, 15, 12));
+	    buttons.setSpacing(10);
+		buttons.getChildren().addAll(skip, pause, resume);
+		
+		vbox.getChildren().addAll(backToMenu, names, songProgress, buttons);
+		BorderPane background = new BorderPane();
+		background.setCenter(vbox);
+		
+		playSongs = new Scene(background, 500, 500);
+		
+		play(skip, pause, resume, songProgress, songName);
+ 	}
+	
+	public static void play(Button skip, Button pause, Button resume, ProgressBar songProgress, Label songName){
+		// First, get an updated version of the song list
+		ArrayList<String> list_of_songs = getCurrentSongs();
+		
+		// Pick a song
+		int currentSong = (int) (Math.random() * list_of_songs.size());
+		String currName = list_of_songs.get(currentSong);
+		songName.setText(list_of_songs.get(currentSong).substring(0, currName.length() - 3));
+		File f1 = new File(songsDirectory + "/" + list_of_songs.get(currentSong));
+		
+		// Play Song
+		Media m = new Media(f1.toURI().toString());
+		MediaPlayer song = new MediaPlayer(m);
+		song.play();
+		song.currentTimeProperty().addListener((ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) -> {
+			songProgress.setProgress(song.getCurrentTime().toMillis()/song.getTotalDuration().toMillis());
+		});
+		
+		// Button event handlers
+
+		skip.setOnMouseClicked(new EventHandler<MouseEvent>(){
+
+			@Override
+			public void handle(MouseEvent arg0) {
+				song.stop();
+            	play(skip, pause, resume, songProgress, songName);
+			}
+			
+		});
+		
+		pause.setOnMouseClicked(new EventHandler<MouseEvent>(){
+
+			@Override
+			public void handle(MouseEvent arg0) {
+				song.pause();
+			}
+			
+		});
+		
+		resume.setOnMouseClicked(new EventHandler<MouseEvent>(){
+
+			@Override
+			public void handle(MouseEvent arg0) {
+				song.setStartTime(song.getCurrentTime());
+				song.play();
+			}
+			
+		});
+		
+		// When song ends, play new song
+		song.setOnEndOfMedia(new Runnable()
+        {
+            public void run() 
+            {
+            	// Play new song
+            	play(skip, pause, resume, songProgress, songName);
+            }
+        });
+	}
+	
+	public static ArrayList<String> getCurrentSongs(){
 		try {
 			Scanner in = new Scanner(new File(songsDirectory + "Playlist.txt"));
 			ArrayList<String> songList = new ArrayList<String>();
@@ -96,7 +195,7 @@ public class FullAppVersion1 extends Application {
 	}
 	
 	public static void changeFileName(String songName, String artistName){
-		ArrayList<String> songsList = returnCurrentFiles();
+		ArrayList<String> songsList = getCurrentSongs();
 		
 		File songsD = new File(songsDirectory);
 		File[] allFiles = songsD.listFiles();
@@ -164,13 +263,6 @@ public class FullAppVersion1 extends Application {
 		}
 	}
 	
-	public static void makePlaySongs(Stage window){
-		Button backToMenu = new Button("Back to Menu");
-		backToMenu.setPrefSize(100, 30);
-		
-		
-	}
-	
 	public static void main(String[] args){
 		launch(args);
 	}
@@ -178,9 +270,10 @@ public class FullAppVersion1 extends Application {
 	@Override
 	public void start(Stage mainWindow) throws Exception {
 		makeAddSongs(mainWindow);
+		makePlaySongs(mainWindow);
 		makeMenu(mainWindow);
 		
-		mainWindow.setScene(menu);
+		mainWindow.setScene(playSongs);
 		mainWindow.show();
 	}
 
