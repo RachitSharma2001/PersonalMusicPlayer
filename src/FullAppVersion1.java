@@ -1,3 +1,4 @@
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,22 +8,32 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Observable;
 import java.util.Scanner;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -31,7 +42,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class FullAppVersion1 extends Application {
-	static Scene menu, songList, addSongs, playSongs;
+	static Scene menu, editSongs, addSongs, playSongs;
 	static String songsDirectory = "/Users/RichSharma/Desktop/PersonalSongs/";
 	static File playlist = new File("/Users/RichSharma/Desktop/PersonalSongs/playlist.txt");
 	
@@ -51,6 +62,7 @@ public class FullAppVersion1 extends Application {
 	    
 	    Button editList = new Button("Edit List");
 	    editList.setPrefSize(100, 20);
+	    editList.setOnAction(e -> window.setScene(editSongs));
 	    
 	    hbox.getChildren().addAll(addS, playS, editList);
 	    
@@ -60,12 +72,75 @@ public class FullAppVersion1 extends Application {
 	    
 	}
 	
+	public static void removeSong(ListView<String> allSongs, int id){
+		allSongs.getItems().remove(id);
+		ArrayList<String> currentSongList = getCurrentSongs();
+		currentSongList.remove(id);
+		FileWriter write;
+		try {
+			write = new FileWriter(new File(songsDirectory + "Playlist.txt"));
+			
+			for(int i = 0; i < currentSongList.size(); i++){
+				write.write(currentSongList.get(i) + "\n");
+			}
+			
+			write.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		File songsD = new File(songsDirectory);
+		File[] allFiles = songsD.listFiles();
+		
+		for(int i = 0; i < allFiles.length; i++){
+			System.out.println(allFiles[i].getName());
+			if(allFiles[i].getName().equals("Playlist.txt") || allFiles[i].getName().equals("youtube-dl") || currentSongList.contains(allFiles[i].getName())) continue;
+			allFiles[i].delete();
+			return;
+		}
+	}
+	
+	public static void makeEditList(Stage window){
+		int height = 400;
+		int width = 300;
+		
+		ArrayList<String> songNames = getCurrentSongs();
+		ObservableList<String> copiedSongs = FXCollections.observableArrayList();
+		for(int i = 0; i < songNames.size(); i++) copiedSongs.add(songNames.get(i));
+		ListView<String> allSongs = new ListView<String>(copiedSongs);
+		System.out.println(allSongs.getSelectionModel().getSelectedIndex());
+		ScrollPane scrollSongs = new ScrollPane();
+		scrollSongs.setContent(allSongs);
+		
+		scrollSongs.setPrefHeight(0.9 * height);
+		scrollSongs.setPrefWidth(0.80 * width);
+		
+		Button delete = new Button("Delete");
+		delete.setOnAction(e -> removeSong(allSongs, allSongs.getSelectionModel().getSelectedIndex()));
+		
+		Button back = new Button("Back");
+	    back.setPrefSize(50, 20);
+	    back.setOnAction(e -> window.setScene(menu));
+	    back.setAlignment(Pos.TOP_LEFT);
+		
+		HBox middleView = new HBox();
+		middleView.getChildren().addAll(scrollSongs, delete);
+		
+		VBox wholeView = new VBox();
+		wholeView.getChildren().addAll(back, middleView);
+		
+		BorderPane background = new BorderPane(wholeView);
+	    
+	    editSongs = new Scene(background, width, height);
+	}
+	
 	public static void makeAddSongs(Stage window){
 		Button back = new Button("Back");
 	    back.setPrefSize(50, 20);
 	    back.setOnAction(e -> window.setScene(menu));
 	    
-		TextField url = new TextField("Enter url here");
+	    TextField url = new TextField("Url");
 		TextField songName = new TextField("Enter song name here");
 		TextField artistName = new TextField("Enter artist name here");
 		
@@ -231,7 +306,9 @@ public class FullAppVersion1 extends Application {
 	}
 	
 	public static void addToPlaylist(TextField url, TextField songName, TextField artistName){
+		//String command = "cd /Users/RichSharma/Desktop/PersonalSongs ; youtube-dl -x --audio-format mp3 \"ytsearch: " + songName.getText() + " by " + artistName.getText() + " lyrics video\"";
 		String command = "cd /Users/RichSharma/Desktop/PersonalSongs ; youtube-dl -x --audio-format mp3 " + url.getText();
+
 		final String[] wrappedCommand = new String[]{"osascript",
 	                "-e", "tell application \"Terminal\" to do script \"" + command + ";exit\""};
 	    try {
@@ -257,8 +334,8 @@ public class FullAppVersion1 extends Application {
 			artistName.setText("");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			url.setText("The given url was invalid");
-			songName.setText("");
+			url.setText("");
+			songName.setText("The given song name was not found");
 			artistName.setText("");
 		}
 	}
@@ -269,6 +346,7 @@ public class FullAppVersion1 extends Application {
 
 	@Override
 	public void start(Stage mainWindow) throws Exception {
+		makeEditList(mainWindow);
 		makeAddSongs(mainWindow);
 		makePlaySongs(mainWindow);
 		makeMenu(mainWindow);
