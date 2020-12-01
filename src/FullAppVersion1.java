@@ -160,42 +160,49 @@ public class FullAppVersion1 extends Application {
 	}
 	
 	public static void makePlaySongs(Stage window){
-		VBox vbox = new VBox();
-		vbox.setPadding(new Insets(15, 12, 15, 12));
-	    vbox.setSpacing(10);
-	    
-		Button backToMenu = new Button("Back to Menu");
-		backToMenu.setPrefSize(150, 30);
+		
+		int height = 300, width = 600;
+		
+		Button backToMenu = new Button("Back");
+		backToMenu.setPrefSize(60, 30);
+		backToMenu.setAlignment(Pos.TOP_LEFT);
 		backToMenu.setOnAction(e->window.setScene(menu));
 		
 		Label songName = new Label("Song Name Artist Name");
-		HBox names = new HBox();
-		names.setPadding(new Insets(15, 12, 15, 12));
-	    names.setSpacing(50);
-		names.getChildren().addAll(songName);
 		
 		ProgressBar songProgress = new ProgressBar();
-		songProgress.setScaleX(1.3);
 		songProgress.setProgress(0.0);
+		songProgress.setPrefWidth(0.6*width);
+		songProgress.setPadding(new Insets(height/20, 0, height/60, 0));
+		
+		Label progressTime = new Label("0:00");
+		progressTime.setPadding(new Insets(0, 0, 0, 0));
 		
 		Button skip = new Button("Skip");
 		Button pause = new Button("Pause");
 		Button resume = new Button("Resume");
-		HBox buttons = new HBox();
-		buttons.setPadding(new Insets(15, 12, 15, 12));
-	    buttons.setSpacing(10);
+		
+		HBox buttons = new HBox(width/8);
+		buttons.setPadding(new Insets(height/40, 0, 0, 0));
+	    buttons.setAlignment(Pos.BASELINE_CENTER);
 		buttons.getChildren().addAll(skip, pause, resume);
 		
-		vbox.getChildren().addAll(backToMenu, names, songProgress, buttons);
+		VBox vbox = new VBox(height/20);
+		vbox.setPadding(new Insets(15, 12, 15, 12));
+	    vbox.setSpacing(10);
+	    vbox.setAlignment(Pos.BASELINE_CENTER);
+		vbox.getChildren().addAll(songName, songProgress, progressTime, buttons);
+		
 		BorderPane background = new BorderPane();
+		background.setTop(backToMenu);
 		background.setCenter(vbox);
 		
-		playSongs = new Scene(background, 500, 500);
+		playSongs = new Scene(background, width, height);
 		
-		play(skip, pause, resume, songProgress, songName);
+		play(skip, pause, resume, songProgress, progressTime, songName);
  	}
 	
-	public static void play(Button skip, Button pause, Button resume, ProgressBar songProgress, Label songName){
+	public static void play(Button skip, Button pause, Button resume, ProgressBar songProgress, Label progressTime, Label songName){
 		// First, get an updated version of the song list
 		ArrayList<String> list_of_songs = getCurrentSongs();
 		
@@ -211,6 +218,9 @@ public class FullAppVersion1 extends Application {
 		song.play();
 		song.currentTimeProperty().addListener((ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) -> {
 			songProgress.setProgress(song.getCurrentTime().toMillis()/song.getTotalDuration().toMillis());
+			int minutes = (int) Math.floor(song.getCurrentTime().toMinutes());
+			int seconds = (int) Math.floor(song.getCurrentTime().toSeconds()) % 60;
+			progressTime.setText("" + minutes + ":" + (seconds < 10 ? "0" : "") + seconds);
 		});
 		
 		// Button event handlers
@@ -220,7 +230,7 @@ public class FullAppVersion1 extends Application {
 			@Override
 			public void handle(MouseEvent arg0) {
 				song.stop();
-            	play(skip, pause, resume, songProgress, songName);
+            	play(skip, pause, resume, songProgress, progressTime, songName);
 			}
 			
 		});
@@ -250,7 +260,7 @@ public class FullAppVersion1 extends Application {
             public void run() 
             {
             	// Play new song
-            	play(skip, pause, resume, songProgress, songName);
+            	play(skip, pause, resume, songProgress, progressTime, songName);
             }
         });
 	}
