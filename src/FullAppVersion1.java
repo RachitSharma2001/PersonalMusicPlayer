@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Scanner;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -45,6 +48,7 @@ public class FullAppVersion1 extends Application {
 	static Scene menu, editSongs, addSongs, playSongs;
 	static String songsDirectory = "/Users/RichSharma/Desktop/PersonalSongs/";
 	static File playlist = new File("/Users/RichSharma/Desktop/PersonalSongs/playlist.txt");
+	static ArrayList<String> songNames = getCurrentSongs();
 	
 	public static void makeMenu(Stage window){
 		HBox hbox = new HBox();
@@ -105,24 +109,23 @@ public class FullAppVersion1 extends Application {
 		int height = 400;
 		int width = 300;
 		
-		ArrayList<String> songNames = getCurrentSongs();
 		ObservableList<String> copiedSongs = FXCollections.observableArrayList();
 		for(int i = 0; i < songNames.size(); i++) copiedSongs.add(songNames.get(i));
 		ListView<String> allSongs = new ListView<String>(copiedSongs);
-		System.out.println(allSongs.getSelectionModel().getSelectedIndex());
+		
 		ScrollPane scrollSongs = new ScrollPane();
 		scrollSongs.setContent(allSongs);
-		
-		scrollSongs.setPrefHeight(0.9 * height);
+		scrollSongs.setPrefHeight(0.8 * height);
 		scrollSongs.setPrefWidth(0.80 * width);
 		
 		Button delete = new Button("Delete");
 		delete.setOnAction(e -> removeSong(allSongs, allSongs.getSelectionModel().getSelectedIndex()));
 		
 		Button back = new Button("Back");
-	    back.setPrefSize(50, 20);
+	    back.setPrefSize(40, 20);
 	    back.setOnAction(e -> window.setScene(menu));
 	    back.setAlignment(Pos.TOP_LEFT);
+	    back.setPadding(new Insets(10, 0, 10, 0));
 		
 		HBox middleView = new HBox();
 		middleView.getChildren().addAll(scrollSongs, delete);
@@ -140,19 +143,18 @@ public class FullAppVersion1 extends Application {
 	    back.setPrefSize(50, 20);
 	    back.setOnAction(e -> window.setScene(menu));
 	    
-	    TextField url = new TextField("Url");
 		TextField songName = new TextField("Enter song name here");
 		TextField artistName = new TextField("Enter artist name here");
 		
 		Button add = new Button("Add");
 	    add.setPrefSize(80, 20);
-	    add.setOnAction(e -> addToPlaylist(url, songName, artistName));
+	    add.setOnAction(e -> addToPlaylist(songName, artistName));
 		
 		VBox vbox = new VBox();
 		vbox.setPadding(new Insets(15, 12, 15, 12));
 	    vbox.setSpacing(10);
 	    vbox.setStyle("-fx-background-color: #336699;");
-	    vbox.getChildren().addAll(back, url, songName, artistName, add);
+	    vbox.getChildren().addAll(back, songName, artistName, add);
 	    
 	    BorderPane background = new BorderPane(vbox);
 	    
@@ -315,9 +317,26 @@ public class FullAppVersion1 extends Application {
 		}
 	}
 	
-	public static void addToPlaylist(TextField url, TextField songName, TextField artistName){
-		//String command = "cd /Users/RichSharma/Desktop/PersonalSongs ; youtube-dl -x --audio-format mp3 \"ytsearch: " + songName.getText() + " by " + artistName.getText() + " lyrics video\"";
-		String command = "cd /Users/RichSharma/Desktop/PersonalSongs ; youtube-dl -x --audio-format mp3 " + url.getText();
+	public static String getUrl(String song_name, String artist_name){
+		String combined_strings = song_name + " by " + artist_name + " lyrics";
+		combined_strings = combined_strings.replaceAll(" ", "+");
+		String search_url = "https://www.youtube.com/results?search_query=" + combined_strings;
+		System.out.println(combined_strings + " " + search_url);
+		Document doc;
+		try {
+			doc = Jsoup.connect(search_url).get();
+			String html = doc.html();
+			return "https://www.youtube.com/" + html.substring(html.indexOf("/watch?"), html.indexOf("\"", html.indexOf("/watch?")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public static void addToPlaylist(TextField songName, TextField artistName){
+		String url = getUrl(songName.getText(), artistName.getText());
+		String command = "cd /Users/RichSharma/Desktop/PersonalSongs ; youtube-dl -x --audio-format mp3 " + url;
 
 		final String[] wrappedCommand = new String[]{"osascript",
 	                "-e", "tell application \"Terminal\" to do script \"" + command + ";exit\""};
@@ -336,15 +355,18 @@ public class FullAppVersion1 extends Application {
 			changeFileName(songName.getText(), artistName.getText());
 			
 			FileWriter addToPlaylist = new FileWriter(playlist, true);
-			addToPlaylist.write(songName.getText() + " " + artistName.getText() + ".mp3\n");
+			
+			String combined_names = songName.getText() + " " + artistName.getText();
+			
+			addToPlaylist.write(combined_names + ".mp3\n");
 			addToPlaylist.close();
 			
-			url.setText("");
-			songName.setText("");
-			artistName.setText("");
+			songNames.add(combined_names);
+			
+			songName.setText("Enter the song name");
+			artistName.setText("Enter the artist name");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			url.setText("");
 			songName.setText("The given song name was not found");
 			artistName.setText("");
 		}
