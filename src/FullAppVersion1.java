@@ -1,4 +1,3 @@
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -141,24 +140,28 @@ public class FullAppVersion1 extends Application {
 	public static void makeAddSongs(Stage window){
 		Button back = new Button("Back");
 	    back.setPrefSize(50, 20);
+	    back.setAlignment(Pos.TOP_LEFT);
 	    back.setOnAction(e -> window.setScene(menu));
 	    
-		TextField songName = new TextField("Enter song name here");
-		TextField artistName = new TextField("Enter artist name here");
-		
+	    Label instruction1 = new Label("Enter the song name here:");
+		TextField songName = new TextField("");
+		Label instruction2 = new Label("Enter the artist name here:");
+		TextField artistName = new TextField("");
+
 		Button add = new Button("Add");
 	    add.setPrefSize(80, 20);
-	    add.setOnAction(e -> addToPlaylist(songName, artistName));
+	    add.setOnAction(e -> addToPlaylist(songName, artistName, window));
 		
 		VBox vbox = new VBox();
-		vbox.setPadding(new Insets(15, 12, 15, 12));
-	    vbox.setSpacing(10);
-	    vbox.setStyle("-fx-background-color: #336699;");
-	    vbox.getChildren().addAll(back, songName, artistName, add);
+		vbox.setPadding(new Insets(20, 20, 20, 20));
+	    vbox.setSpacing(15);
+	    vbox.getChildren().addAll(instruction1, songName, instruction2, artistName, add);
 	    
-	    BorderPane background = new BorderPane(vbox);
+	    BorderPane background = new BorderPane();
+	    background.setTop(back);
+	    background.setCenter(vbox);
 	    
-	    addSongs = new Scene(background, 200, 200);
+	    addSongs = new Scene(background, 400, 400);
 	}
 	
 	public static void makePlaySongs(Stage window){
@@ -334,7 +337,7 @@ public class FullAppVersion1 extends Application {
 		}
 	}
 	
-	public static void addToPlaylist(TextField songName, TextField artistName){
+	public static void addToPlaylist(TextField songName, TextField artistName, Stage window){
 		String url = getUrl(songName.getText(), artistName.getText());
 		String command = "cd /Users/RichSharma/Desktop/PersonalSongs ; youtube-dl -x --audio-format mp3 " + url;
 
@@ -363,8 +366,10 @@ public class FullAppVersion1 extends Application {
 			
 			songNames.add(combined_names);
 			
-			songName.setText("Enter the song name");
-			artistName.setText("Enter the artist name");
+			songName = new TextField("Enter song name here");
+			artistName = new TextField("Enter artist name here");
+			
+			makeEditList(window);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			songName.setText("The given song name was not found");
