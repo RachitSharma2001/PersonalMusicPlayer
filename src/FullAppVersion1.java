@@ -1,3 +1,4 @@
+import java.awt.Paint;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,6 +24,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -33,13 +35,21 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.scene.layout.BackgroundImage;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -48,12 +58,17 @@ public class FullAppVersion1 extends Application {
 	static String songsDirectory = "/Users/RichSharma/Desktop/PersonalSongs/";
 	static File playlist = new File("/Users/RichSharma/Desktop/PersonalSongs/playlist.txt");
 	static ArrayList<String> songNames = getCurrentSongs();
+	static double screenHeight = Screen.getPrimary().getVisualBounds().getHeight();
+	static double screenWidth = Screen.getPrimary().getVisualBounds().getWidth();
 	
 	public static void makeMenu(Stage window){
+		int height = (int) screenHeight/2;
+		int width = (int) screenWidth/2;
+		
 		HBox hbox = new HBox();
 		hbox.setPadding(new Insets(15, 12, 15, 12));
-	    hbox.setSpacing(10);
-	    hbox.setStyle("-fx-background-color: #336699;");
+	    hbox.setSpacing(width/4);
+	    //hbox.setStyle("-fx-background-color: #336699;");
 
 	    Button playS = new Button("Play Songs");
 	    playS.setPrefSize(100, 20);
@@ -69,9 +84,21 @@ public class FullAppVersion1 extends Application {
 	    
 	    hbox.getChildren().addAll(addS, playS, editList);
 	    
-	    BorderPane background = new BorderPane(hbox);
+	    ImageView title = new ImageView(new Image("file:music_title.png"));
+	    title.setFitWidth(screenWidth/2);
+	    title.setFitHeight(screenHeight/4);
 	    
-	    menu = new Scene(background, 500, 500);
+	    BorderPane background = new BorderPane();
+	    
+	    BackgroundImage image = new BackgroundImage(new Image("file:MountainBackground.jpg"), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, new BackgroundSize(screenWidth/2, screenHeight/2, false, false, true, true));
+	    Background backImage = new Background(image);
+	    //Background backImage = new Background(new BackgroundImage(new Image("MountainBackground.jpg")), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.AUTO);
+	    
+	    background.setBackground(backImage);
+	    background.setCenter(hbox);
+	    background.setTop(title);
+	    
+	    menu = new Scene(background, (1*screenWidth/2), (1*screenHeight/2));
 	    
 	}
 	
@@ -105,8 +132,8 @@ public class FullAppVersion1 extends Application {
 	}
 	
 	public static void makeEditList(Stage window){
-		int height = 400;
-		int width = 300;
+		int height = (int) (screenHeight * 0.5);
+		int width = (int) (screenWidth * 0.4);
 		
 		ObservableList<String> copiedSongs = FXCollections.observableArrayList();
 		for(int i = 0; i < songNames.size(); i++) copiedSongs.add(songNames.get(i));
@@ -115,7 +142,8 @@ public class FullAppVersion1 extends Application {
 		ScrollPane scrollSongs = new ScrollPane();
 		scrollSongs.setContent(allSongs);
 		scrollSongs.setPrefHeight(0.8 * height);
-		scrollSongs.setPrefWidth(0.80 * width);
+		scrollSongs.setPrefWidth(0.4 * width);
+	    scrollSongs.setPadding(new Insets(10, 0, 10, 0));
 		
 		Button delete = new Button("Delete");
 		delete.setOnAction(e -> removeSong(allSongs, allSongs.getSelectionModel().getSelectedIndex()));
@@ -130,22 +158,34 @@ public class FullAppVersion1 extends Application {
 		middleView.getChildren().addAll(scrollSongs, delete);
 		
 		VBox wholeView = new VBox();
-		wholeView.getChildren().addAll(back, middleView);
+		wholeView.getChildren().addAll(middleView);
 		
-		BorderPane background = new BorderPane(wholeView);
+		BackgroundImage image = new BackgroundImage(new Image("file:jasper-lake.jpg"), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, new BackgroundSize(screenWidth/2, screenHeight/2, false, false, true, true));
+		Background backImage = new Background(image);
+			
+		//BorderPane background = new BorderPane(wholeView);
+		BorderPane background = new BorderPane();
+		background.setTop(back);
+	    background.setBackground(backImage);
+		background.setCenter(wholeView);
 	    
 	    editSongs = new Scene(background, width, height);
 	}
 	
 	public static void makeAddSongs(Stage window){
+		int height = (int) (0.42 * screenHeight), width = (int) (0.42 * screenWidth);
+		
 		Button back = new Button("Back");
 	    back.setPrefSize(50, 20);
 	    back.setAlignment(Pos.TOP_LEFT);
 	    back.setOnAction(e -> window.setScene(menu));
 	    
 	    Label instruction1 = new Label("Enter the song name here:");
+		instruction1.setTextFill(Color.WHITE);
 		TextField songName = new TextField("");
+		
 		Label instruction2 = new Label("Enter the artist name here:");
+		instruction2.setTextFill(Color.WHITE);
 		TextField artistName = new TextField("");
 
 		Button add = new Button("Add");
@@ -154,19 +194,23 @@ public class FullAppVersion1 extends Application {
 		
 		VBox vbox = new VBox();
 		vbox.setPadding(new Insets(20, 20, 20, 20));
-	    vbox.setSpacing(15);
+	    vbox.setSpacing(height/10);
 	    vbox.getChildren().addAll(instruction1, songName, instruction2, artistName, add);
 	    
+	    BackgroundImage image = new BackgroundImage(new Image("file:Another_good_image.jpg"), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, new BackgroundSize(screenWidth/2, screenHeight/2, false, false, true, true));
+	    Background backImage = new Background(image);
+	    
 	    BorderPane background = new BorderPane();
+	    background.setBackground(backImage);
 	    background.setTop(back);
 	    background.setCenter(vbox);
 	    
-	    addSongs = new Scene(background, 400, 400);
+	    addSongs = new Scene(background, width, height);
 	}
 	
 	public static void makePlaySongs(Stage window){
 		
-		int height = 300, width = 600;
+		int height = (int) screenHeight/2, width = (int) screenWidth/2;
 		
 		Button backToMenu = new Button("Back");
 		backToMenu.setPrefSize(60, 30);
@@ -174,6 +218,7 @@ public class FullAppVersion1 extends Application {
 		backToMenu.setOnAction(e->window.setScene(menu));
 		
 		Label songName = new Label("Song Name Artist Name");
+		songName.setTextFill(Color.WHITE);
 		
 		ProgressBar songProgress = new ProgressBar();
 		songProgress.setProgress(0.0);
@@ -181,6 +226,7 @@ public class FullAppVersion1 extends Application {
 		songProgress.setPadding(new Insets(height/20, 0, height/60, 0));
 		
 		Label progressTime = new Label("0:00");
+		progressTime.setTextFill(Color.WHITE);
 		progressTime.setPadding(new Insets(0, 0, 0, 0));
 		
 		Button skip = new Button("Skip");
@@ -197,9 +243,13 @@ public class FullAppVersion1 extends Application {
 	    vbox.setSpacing(10);
 	    vbox.setAlignment(Pos.BASELINE_CENTER);
 		vbox.getChildren().addAll(songName, songProgress, progressTime, buttons);
+
+	    BackgroundImage image = new BackgroundImage(new Image("file:amazing_background.png"), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, new BackgroundSize(screenWidth/2, screenHeight/2, false, false, true, true));
+	    Background backImage = new Background(image);
 		
 		BorderPane background = new BorderPane();
 		background.setTop(backToMenu);
+	    background.setBackground(backImage);
 		background.setCenter(vbox);
 		
 		playSongs = new Scene(background, width, height);
