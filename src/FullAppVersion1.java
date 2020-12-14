@@ -142,8 +142,8 @@ public class FullAppVersion1 extends Application {
 		ScrollPane scrollSongs = new ScrollPane();
 		scrollSongs.setContent(allSongs);
 		scrollSongs.setPrefHeight(0.8 * height);
-		scrollSongs.setPrefWidth(0.4 * width);
-	    scrollSongs.setPadding(new Insets(10, 0, 10, 0));
+		scrollSongs.setPrefWidth(0.45 * width);
+	    //scrollSongs.setPadding(new Insets(10, 0, 10, 0));
 		
 		Button delete = new Button("Delete");
 		delete.setOnAction(e -> removeSong(allSongs, allSongs.getSelectionModel().getSelectedIndex()));
@@ -156,6 +156,7 @@ public class FullAppVersion1 extends Application {
 		
 		HBox middleView = new HBox();
 		middleView.getChildren().addAll(scrollSongs, delete);
+		middleView.setPadding(new Insets(10, 10, 10, 10));
 		
 		VBox wholeView = new VBox();
 		wholeView.getChildren().addAll(middleView);
@@ -262,6 +263,13 @@ public class FullAppVersion1 extends Application {
 		ArrayList<String> list_of_songs = getCurrentSongs();
 		
 		// Pick a song
+		
+		// Have detectNewSongs() function which looks at all files in directory, sees which don't match playList.txt
+		// and adds them to playList.txt(make sure to avoid conflict with remove songs, where song first removed from playList
+		// then removed from file -> maybe first remove the file, THEN from playList -> though this may lead to error where
+		// we pick a song that doesn't exist, though we can avoid that by just doing try catch on playing a song -> if 
+		// we end up in catch, just pick new song
+		
 		int currentSong = (int) (Math.random() * list_of_songs.size());
 		String currName = list_of_songs.get(currentSong);
 		songName.setText(list_of_songs.get(currentSong).substring(0, currName.length() - 3));
